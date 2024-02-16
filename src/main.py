@@ -1,35 +1,13 @@
 import uvicorn
-from fastapi import FastAPI, Form
+from fastapi import FastAPI
 
-from typing import Annotated
+from src.currencies_views import router as currencies_router
+from src.exchange_rates_views import router as exchange_rates_router
 
 
 app = FastAPI()
-
-
-@app.get("/")
-async def index():
-    return {"message": "главная страница"}
-
-
-@app.get("/currencies")
-async def currencies():
-    return ["list all currencies"]
-
-
-@app.post("/currencies")
-async def currencies(name: Annotated[str, Form()], code: Annotated[str, Form()], sign: Annotated[str, Form()]):
-    return {"name": name, "code": code, "sign": sign}
-
-
-@app.get("/currency/{code}")
-async def currency(code):
-    return {"currency": code}
-
-
-@app.get("/exchangeRates")
-async def exchange_rates():
-    return ["list all exchange_rates"]
+app.include_router(currencies_router)
+app.include_router(exchange_rates_router)
 
 
 if __name__ == "__main__":
