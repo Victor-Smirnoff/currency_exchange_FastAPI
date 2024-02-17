@@ -3,7 +3,7 @@ import decimal
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.model.base import Base
+from src.model.database import Base
 
 
 class Currencies(Base):
