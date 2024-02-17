@@ -17,6 +17,7 @@ pydantic = "^2.6.1"
 pydantic-settings = "^2.2.0"
 python-dotenv = "^1.0.1"
 alembic = "^1.13.1"
+black = {extras = ["d"], version = "^24.2.0"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

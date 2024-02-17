@@ -1,6 +1,6 @@
 import decimal
 
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.model.database import Base
@@ -15,4 +15,4 @@ class Currencies(Base):
 class ExchangeRates(Base):
     base_currency_id: Mapped[int] = mapped_column(ForeignKey("currencies.id"))
     target_currency_id: Mapped[int] = mapped_column(ForeignKey("currencies.id"))
-    rate: Mapped[decimal] = mapped_column()
+    rate: Mapped[decimal.Decimal] = mapped_column(Numeric(precision=12, scale=4), nullable=False)
