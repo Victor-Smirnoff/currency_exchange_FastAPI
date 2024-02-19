@@ -26,15 +26,16 @@ class CreateTablesDataBase:
         Base.metadata.drop_all(engine)
 
     @staticmethod
-    def create_tables():
+    async def create_tables():
         """
         Метод создает две таблицы в базе данных currency_exchange:
         currencies - таблица с данными по всем валютам
         exchangerates - таблица с данными по обменным курсам
         :return: None
         """
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
 
     async def insert_data_currencies(self):
         """
@@ -53,6 +54,10 @@ class CreateTablesDataBase:
 
     @staticmethod
     def get_dict_currencies() -> dict:
+        """
+        Метод читает файл currencies.txt и создает словарь с данными по всем прочитанным валютам
+        :return: dict
+        """
         with open("static/currencies.txt", "r", encoding="UTF-8") as file:
             content = file.readlines()
 
@@ -67,6 +72,11 @@ class CreateTablesDataBase:
 
     @staticmethod
     async def insert_one_currency(currency: Currencies):
+        """
+        Метод вставляет одну валюту в таблицу Currencies
+        :param currency: объект класса Currencies
+        :return: None
+        """
         async with session_factory() as session:
             session.add(currency)
             await session.commit()
@@ -81,7 +91,6 @@ class CreateTablesDataBase:
         list_values_exchangerates = self.get_list_values_exchangerates()
         if list_values_exchangerates:
             exchangerates_list = []
-            # all_currencies = self.get_all_currencies()
             target_currency_id = 44
             for rate_id, rate in enumerate(list_values_exchangerates):
                 base_currency_id = rate_id + 1
@@ -97,6 +106,10 @@ class CreateTablesDataBase:
 
     @staticmethod
     def get_all_currencies() -> list[Currencies]:
+        """
+        Метод ходит в БД и читает оттуда все записи из таблицы Currencies
+        :return: список всех записей из таблицы Currencies
+        """
         with session_factory() as session:
             query = select(Currencies)
             result = session.execute(query)
@@ -105,6 +118,10 @@ class CreateTablesDataBase:
 
     @staticmethod
     def get_list_values_exchangerates() -> list[decimal.Decimal]:
+        """
+        Метод читает файл exchangerates.txt и возвращает все обменные курсы в виде списка
+        :return: list всех обменных курсов в формате decimal
+        """
         try:
             with open("static/exchangerates.txt", "r", encoding="UTF-8") as file:
                 list_exchangerates = [decimal.Decimal(line.strip()) for line in file.readlines()]
@@ -112,13 +129,18 @@ class CreateTablesDataBase:
         except Exception as e:
             print(f"Ошибка: {e}. Не удалось прочитать файл с обменными курсами")
 
+    async def main(self):
+        """
+        Метод запускает все необходимые методы для первоначальной инициализации таблиц БД и их наполнения
+        :return: None
+        """
+        await self.create_tables()              # Не обязательно выполнять, т.к. создал их с помощью миграции alembic
+        await self.insert_data_currencies()     # добавление 43 валют с сайта ЦБ РФ
+        rub = Currencies(code="RUB", full_name="Российский рубль", sign="₽")
+        await self.insert_one_currency(rub)     # добавление ещё одной валюты - российский рубль
+        await self.insert_data_exchangerates()  # добавление 43 обменных курса валют с сайта ЦБ РФ
 
-data_base_obj = CreateTablesDataBase()
 
-# asyncio.run(data_base_obj.create_tables())  # не требуется выполнять, т.к. создал таблицы с помощью миграции alembic
-# asyncio.run(data_base_obj.insert_data_currencies())  # добавление 43 валют с сайта ЦБ РФ
-
-# rub = Currencies(code="RUB", full_name="Российский рубль", sign="₽")
-# asyncio.run(data_base_obj.insert_one_currency(rub))  # добавление ещё одной валюты - российский рубль
-
-asyncio.run(data_base_obj.insert_data_exchangerates())  # добавление 43 обменных курса валют с сайта ЦБ РФ
+if __name__ == '__main__':
+    data_base_obj = CreateTablesDataBase()
+    asyncio.run(data_base_obj.main())
