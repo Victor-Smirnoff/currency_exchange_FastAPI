@@ -7,7 +7,7 @@ from src.model.database import Base
 
 
 class Currencies(Base):
-    code: Mapped[str] = mapped_column(String(3))
+    code: Mapped[str] = mapped_column(String(3), unique=True)
     full_name: Mapped[str] = mapped_column(String(50))
     sign: Mapped[str] = mapped_column(String(3))
 

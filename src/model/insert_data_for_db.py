@@ -2,6 +2,7 @@ import asyncio
 
 from src.model.database import Base, db_helper
 from src.model.models import Currencies
+import decimal
 
 
 engine = db_helper.engine
@@ -64,8 +65,31 @@ class CreateTablesDataBase:
 
         return currencies_dict
 
+    async def insert_data_exchangerates(self):
+        """
+        Метод добавляет много валют в таблицу currencies
+        Данные берутся из файла exchangerates.txt - это 43 обменных курса с сайта ЦБ РФ
+        :return: None
+        """
+        list_exchangerates = self.get_list_exchangerates()
+        if list_exchangerates:
+            pass
+
+    @staticmethod
+    def get_list_exchangerates() -> list[decimal.Decimal]:
+        try:
+            with open("static/exchangerates.txt", "r", encoding="UTF-8") as file:
+                list_exchangerates = [decimal.Decimal(line.strip()) for line in file.readlines()]
+            return list_exchangerates
+        except Exception as e:
+            print(f"Ошибка: {e}. Не удалось прочитать файл с обменными курсами")
+
 
 data_base_obj = CreateTablesDataBase()
 
 # asyncio.run(data_base_obj.create_tables()) # не требуется выполнять, т.к. создал таблицы с помощью миграции alembic
-asyncio.run(data_base_obj.insert_data_currencies())
+# asyncio.run(data_base_obj.insert_data_currencies())
+
+res = data_base_obj.get_list_exchangerates()
+
+print(res)
