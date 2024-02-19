@@ -1,7 +1,7 @@
 import asyncio
-
+from sqlalchemy import select
 from src.model.database import Base, db_helper
-from src.model.models import Currencies
+from src.model.models import Currencies, ExchangeRates
 import decimal
 
 
@@ -65,18 +65,46 @@ class CreateTablesDataBase:
 
         return currencies_dict
 
+    @staticmethod
+    async def insert_one_currency(currency: Currencies):
+        async with session_factory() as session:
+            session.add(currency)
+            await session.commit()
+
     async def insert_data_exchangerates(self):
         """
         Метод добавляет много валют в таблицу currencies
         Данные берутся из файла exchangerates.txt - это 43 обменных курса с сайта ЦБ РФ
+        Целевая валюта везде российский рубль, так как данные взяты с сайта ЦБ РФ
         :return: None
         """
-        list_exchangerates = self.get_list_exchangerates()
-        if list_exchangerates:
-            pass
+        list_values_exchangerates = self.get_list_values_exchangerates()
+        if list_values_exchangerates:
+            exchangerates_list = []
+            # all_currencies = self.get_all_currencies()
+            target_currency_id = 44
+            for rate_id, rate in enumerate(list_values_exchangerates):
+                base_currency_id = rate_id + 1
+                exchangerate = ExchangeRates(base_currency_id=base_currency_id,
+                                             target_currency_id=target_currency_id,
+                                             rate=rate
+                                             )
+                exchangerates_list.append(exchangerate)
+
+            async with session_factory() as session:
+                session.add_all(exchangerates_list)
+                await session.commit()
 
     @staticmethod
-    def get_list_exchangerates() -> list[decimal.Decimal]:
+    def get_all_currencies() -> list[Currencies]:
+        with session_factory() as session:
+            query = select(Currencies)
+            result = session.execute(query)
+            all_currencies = result.scalars().all()
+            return all_currencies
+
+    @staticmethod
+    def get_list_values_exchangerates() -> list[decimal.Decimal]:
         try:
             with open("static/exchangerates.txt", "r", encoding="UTF-8") as file:
                 list_exchangerates = [decimal.Decimal(line.strip()) for line in file.readlines()]
@@ -87,9 +115,10 @@ class CreateTablesDataBase:
 
 data_base_obj = CreateTablesDataBase()
 
-# asyncio.run(data_base_obj.create_tables()) # не требуется выполнять, т.к. создал таблицы с помощью миграции alembic
-# asyncio.run(data_base_obj.insert_data_currencies())
+# asyncio.run(data_base_obj.create_tables())  # не требуется выполнять, т.к. создал таблицы с помощью миграции alembic
+# asyncio.run(data_base_obj.insert_data_currencies())  # добавление 43 валют с сайта ЦБ РФ
 
-res = data_base_obj.get_list_exchangerates()
+# rub = Currencies(code="RUB", full_name="Российский рубль", sign="₽")
+# asyncio.run(data_base_obj.insert_one_currency(rub))  # добавление ещё одной валюты - российский рубль
 
-print(res)
+asyncio.run(data_base_obj.insert_data_exchangerates())  # добавление 43 обменных курса валют с сайта ЦБ РФ
