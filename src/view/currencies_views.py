@@ -15,7 +15,9 @@ dao_obj_currencies = DaoCurrencyRepository()
 async def get_all_currencies(
         session: AsyncSession = Depends(db_helper.session_dependency)
 ):
-    await dao_obj_currencies.find_all(session)
+    all_currencies_list = await dao_obj_currencies.find_all(session)
+    # добавить здесь ещё обработчик для оформления готового ответа JSON (заменить full_name на name в словаре)
+    return all_currencies_list
 
 
 # @router.post("/currencies")
