@@ -1,3 +1,5 @@
+import asyncio
+
 from sqlalchemy import select, Result
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,12 +13,13 @@ class DaoCurrencyRepository:
     Класс для выполнения основных операций в БД над таблицей Currencies
     """
 
+
     @staticmethod
     async def find_all(session: AsyncSession) -> Union[list[Currencies], ErrorResponse]:
         """
-        Метод возвращает список объектов класса Currencies
+        Метод возвращает список объектов класса Currencies или объект ошибки ErrorResponse
         :param session: объект асинхронной сессии AsyncSession
-        :return: list[Currencies]
+        :return: list[Currencies] или ErrorResponse
         """
         try:
             stmt = select(Currencies).order_by(Currencies.id)
@@ -36,9 +39,10 @@ class DaoCurrencyRepository:
         :return: объект класса Currencies или ErrorResponse
         """
         try:
-            stmt = select(Currencies).where(Currencies.id == currency_id)
-            result: Result = await session.execute(stmt)
-            currency = result.scalars().one()
+            # stmt = select(Currencies).where(Currencies.id == currency_id)
+            # result: Result = await session.execute(stmt)
+            # currency = result.scalars().one()
+            currency = await session.get(Currencies, currency_id)
             if isinstance(currency, Currencies):
                 return currency
             else:
