@@ -5,6 +5,17 @@ from src.model.models import Currencies, ExchangeRates
 import decimal
 
 
+"""
+Внимание! 
+Перед запуском данного файла настоятельно рекомендуется читать методы, которые вызываются функцией main!
+Методы сначала удаляют все таблицы из базы данных currency_exchange.
+А потом создают новые пустые таблицы currencies и exchangerates.
+А потом добавляют туда данные из статических файлов currencies.txt и exchangerates.txt!
+Внимание!
+Этот файл служит только для начальной инициализации таблиц.
+"""
+
+
 engine = db_helper.engine
 session_factory = db_helper.session_factory
 

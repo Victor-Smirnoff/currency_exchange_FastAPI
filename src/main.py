@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 
-from src.currencies_views import router as currencies_router
-from src.exchange_rates_views import router as exchange_rates_router
+from src.view import currencies_router
+from src.view import exchange_rates_router
 
 
 app = FastAPI()
