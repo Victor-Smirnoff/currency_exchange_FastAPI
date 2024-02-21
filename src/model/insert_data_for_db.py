@@ -1,7 +1,7 @@
 import asyncio
 from sqlalchemy import select
 from src.model.database import Base, db_helper
-from src.model.models import Currencies, ExchangeRates
+from src.model.models import Currency, ExchangeRate
 import decimal
 
 
@@ -56,9 +56,9 @@ class CreateTablesDataBase:
         """
         currencies_dict = self.get_dict_currencies()
         if currencies_dict:
-            currencies_list = [Currencies(code=code,
-                                          full_name=full_name,
-                                          sign='$') for code, full_name in currencies_dict.items()]
+            currencies_list = [Currency(code=code,
+                                        full_name=full_name,
+                                        sign='$') for code, full_name in currencies_dict.items()]
             async with session_factory() as session:
                 session.add_all(currencies_list)
                 await session.commit()
@@ -82,10 +82,10 @@ class CreateTablesDataBase:
         return currencies_dict
 
     @staticmethod
-    async def insert_one_currency(currency: Currencies):
+    async def insert_one_currency(currency: Currency):
         """
-        Метод вставляет одну валюту в таблицу Currencies
-        :param currency: объект класса Currencies
+        Метод вставляет одну валюту в таблицу Currency
+        :param currency: объект класса Currency
         :return: None
         """
         async with session_factory() as session:
@@ -105,10 +105,10 @@ class CreateTablesDataBase:
             target_currency_id = 44
             for rate_id, rate in enumerate(list_values_exchangerates):
                 base_currency_id = rate_id + 1
-                exchangerate = ExchangeRates(base_currency_id=base_currency_id,
-                                             target_currency_id=target_currency_id,
-                                             rate=rate
-                                             )
+                exchangerate = ExchangeRate(base_currency_id=base_currency_id,
+                                            target_currency_id=target_currency_id,
+                                            rate=rate
+                                            )
                 exchangerates_list.append(exchangerate)
 
             async with session_factory() as session:
@@ -116,13 +116,13 @@ class CreateTablesDataBase:
                 await session.commit()
 
     @staticmethod
-    def get_all_currencies() -> list[Currencies]:
+    def get_all_currencies() -> list[Currency]:
         """
-        Метод ходит в БД и читает оттуда все записи из таблицы Currencies
-        :return: список всех записей из таблицы Currencies
+        Метод ходит в БД и читает оттуда все записи из таблицы Currency
+        :return: список всех записей из таблицы Currency
         """
         with session_factory() as session:
-            query = select(Currencies)
+            query = select(Currency)
             result = session.execute(query)
             all_currencies = result.scalars().all()
             return all_currencies
@@ -147,7 +147,7 @@ class CreateTablesDataBase:
         """
         await self.create_tables()              # Не обязательно выполнять, т.к. создал их с помощью миграции alembic
         await self.insert_data_currencies()     # добавление 43 валют с сайта ЦБ РФ
-        rub = Currencies(code="RUB", full_name="Российский рубль", sign="₽")
+        rub = Currency(code="RUB", full_name="Российский рубль", sign="₽")
         await self.insert_one_currency(rub)     # добавление ещё одной валюты - российский рубль
         await self.insert_data_exchangerates()  # добавление 43 обменных курса валют с сайта ЦБ РФ
 

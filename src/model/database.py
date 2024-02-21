@@ -1,6 +1,6 @@
 from asyncio import current_task
 
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, declared_attr
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, async_scoped_session, AsyncSession
 
 from src.model.config import settings
@@ -8,10 +8,6 @@ from src.model.config import settings
 
 class Base(DeclarativeBase):
     __abstract__ = True
-
-    @declared_attr
-    def __tablename__(self):
-        return f"{self.__name__.lower()}"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 

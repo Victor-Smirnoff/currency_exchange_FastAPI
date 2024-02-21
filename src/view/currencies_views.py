@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoCurrencyRepository
 from src.exception import CurrencyException
-from src.model import Currencies, db_helper
+from src.model import Currency, db_helper
 
 
 router = APIRouter(tags=["currencies"])
@@ -45,7 +45,7 @@ async def get_currency_by_code(
         session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     response = await dao_obj_currencies.find_by_code(session=session, code=code)
-    if isinstance(response, Currencies):
+    if isinstance(response, Currency):
         currency = dao_obj_currencies.get_correct_currency_dict(response)
         return currency
     else:

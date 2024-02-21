@@ -1,26 +1,24 @@
-import asyncio
-
 from sqlalchemy import select, Result
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.dto_response import ErrorResponse
-from src.model import Currencies
+from src.model import Currency
 
 
 class DaoCurrencyRepository:
     """
-    Класс для выполнения основных операций в БД над таблицей Currencies
+    Класс для выполнения основных операций в БД над таблицей Currency
     """
 
     @staticmethod
-    async def find_all(session: AsyncSession) -> list[Currencies] | ErrorResponse:
+    async def find_all(session: AsyncSession) -> list[Currency] | ErrorResponse:
         """
-        Метод возвращает список объектов класса Currencies или объект ошибки ErrorResponse
+        Метод возвращает список объектов класса Currency или объект ошибки ErrorResponse
         :param session: объект асинхронной сессии AsyncSession
-        :return: list[Currencies] или ErrorResponse
+        :return: list[Currency] или ErrorResponse
         """
         try:
-            stmt = select(Currencies).order_by(Currencies.id)
+            stmt = select(Currency).order_by(Currency.id)
             result: Result = await session.execute(stmt)
             list_all_currencies = result.scalars().all()
             return list(list_all_currencies)
@@ -29,16 +27,16 @@ class DaoCurrencyRepository:
             return response
 
     @staticmethod
-    async def find_by_id(session: AsyncSession, currency_id: int) -> Currencies | ErrorResponse:
+    async def find_by_id(session: AsyncSession, currency_id: int) -> Currency | ErrorResponse:
         """
-        Метод возвращает найденный объект класса Currencies если он найден в БД, иначе объект ErrorResponse
+        Метод возвращает найденный объект класса Currency если он найден в БД, иначе объект ErrorResponse
         :param session: объект асинхронной сессии AsyncSession
         :param currency_id: айди валюты
-        :return: объект класса Currencies или ErrorResponse
+        :return: объект класса Currency или ErrorResponse
         """
         try:
-            currency = await session.get(Currencies, currency_id)
-            if isinstance(currency, Currencies):
+            currency = await session.get(Currency, currency_id)
+            if isinstance(currency, Currency):
                 return currency
             else:
                 response = ErrorResponse(code=404, message=f"Валюта с id {currency_id} не найдена")
@@ -48,19 +46,19 @@ class DaoCurrencyRepository:
             return response
 
     @staticmethod
-    async def find_by_code(session: AsyncSession, code: str) -> Currencies | ErrorResponse:
+    async def find_by_code(session: AsyncSession, code: str) -> Currency | ErrorResponse:
         """
-        Метод возвращает найденный объект класса Currencies если он найден в БД, иначе объект ErrorResponse
+        Метод возвращает найденный объект класса Currency если он найден в БД, иначе объект ErrorResponse
         :param session: объект асинхронной сессии AsyncSession
         :param code: код валюты
-        :return: объект класса Currencies или ErrorResponse
+        :return: объект класса Currency или ErrorResponse
         """
         try:
-            stmt = select(Currencies).where(Currencies.code == code)
+            stmt = select(Currency).where(Currency.code == code)
             result: Result = await session.execute(stmt)
             if isinstance(result, Result):
                 currency = result.scalar()
-                if isinstance(currency, Currencies):
+                if isinstance(currency, Currency):
                     return currency
                 else:
                     if code == "":
@@ -73,10 +71,10 @@ class DaoCurrencyRepository:
             return response
 
     @staticmethod
-    def get_correct_currency_dict(currency: Currencies) -> dict:
+    def get_correct_currency_dict(currency: Currency) -> dict:
         """
         Метод делает правильный словарь для отправки в REST API
-        :param currency: объект класса Currencies
+        :param currency: объект класса Currency
         :return: dict формата {"id": id, "name": name, "code": code, "sign": sign}
         """
         currency_dict = {
