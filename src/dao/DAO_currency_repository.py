@@ -13,7 +13,6 @@ class DaoCurrencyRepository:
     Класс для выполнения основных операций в БД над таблицей Currencies
     """
 
-
     @staticmethod
     async def find_all(session: AsyncSession) -> Union[list[Currencies], ErrorResponse]:
         """
@@ -51,3 +50,19 @@ class DaoCurrencyRepository:
         except SQLAlchemyError as e:
             response = ErrorResponse(code=500, message=f"База данных недоступна: {e}")
             return response
+
+    @staticmethod
+    def get_correct_currency_dict(currency: Currencies) -> dict:
+        """
+        Метод делает правильный словарь для отправки в REST API
+        :param currency: объект класса Currencies
+        :return: dict формата {"id": id, "name": name, "code": code, "sign": sign}
+        """
+        currency_dict = {
+            "id": currency.id,
+            "name": currency.full_name,
+            "code": currency.code,
+            "sign": currency.sign,
+        }
+
+        return currency_dict
