@@ -3,7 +3,6 @@ import asyncio
 from sqlalchemy import select, Result
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Union
 from src.dto_response import ErrorResponse
 from src.model import Currencies
 
@@ -14,7 +13,7 @@ class DaoCurrencyRepository:
     """
 
     @staticmethod
-    async def find_all(session: AsyncSession) -> Union[list[Currencies], ErrorResponse]:
+    async def find_all(session: AsyncSession) -> list[Currencies] | ErrorResponse:
         """
         Метод возвращает список объектов класса Currencies или объект ошибки ErrorResponse
         :param session: объект асинхронной сессии AsyncSession
@@ -30,7 +29,7 @@ class DaoCurrencyRepository:
             return response
 
     @staticmethod
-    async def find_by_id(session: AsyncSession, currency_id: int) -> Union[Currencies, ErrorResponse]:
+    async def find_by_id(session: AsyncSession, currency_id: int) -> Currencies | ErrorResponse:
         """
         Метод возвращает найденный объект класса Currencies если он найден в БД, иначе объект ErrorResponse
         :param session: объект асинхронной сессии AsyncSession
@@ -38,15 +37,37 @@ class DaoCurrencyRepository:
         :return: объект класса Currencies или ErrorResponse
         """
         try:
-            # stmt = select(Currencies).where(Currencies.id == currency_id)
-            # result: Result = await session.execute(stmt)
-            # currency = result.scalars().one()
             currency = await session.get(Currencies, currency_id)
             if isinstance(currency, Currencies):
                 return currency
             else:
                 response = ErrorResponse(code=404, message=f"Валюта с id {currency_id} не найдена")
                 return response
+        except SQLAlchemyError as e:
+            response = ErrorResponse(code=500, message=f"База данных недоступна: {e}")
+            return response
+
+    @staticmethod
+    async def find_by_code(session: AsyncSession, code: str) -> Currencies | ErrorResponse:
+        """
+        Метод возвращает найденный объект класса Currencies если он найден в БД, иначе объект ErrorResponse
+        :param session: объект асинхронной сессии AsyncSession
+        :param code: код валюты
+        :return: объект класса Currencies или ErrorResponse
+        """
+        try:
+            stmt = select(Currencies).where(Currencies.code == code)
+            result: Result = await session.execute(stmt)
+            if isinstance(result, Result):
+                currency = result.scalar()
+                if isinstance(currency, Currencies):
+                    return currency
+                else:
+                    if code == "":
+                        response = ErrorResponse(code=400, message="Код валюты отсутствует в адресе")
+                    else:
+                        response = ErrorResponse(code=404, message=f"Валюта “{code}” не найдена")
+                    return response
         except SQLAlchemyError as e:
             response = ErrorResponse(code=500, message=f"База данных недоступна: {e}")
             return response

@@ -1,9 +1,9 @@
-from typing import Annotated, Union
-from fastapi import APIRouter, Form, Path, Depends
+from typing import Annotated
+from fastapi import APIRouter, Form, Path, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoCurrencyRepository
-from src.dto_response import ErrorResponse
+from src.exception import CurrencyException
 from src.model import Currencies, db_helper
 
 
@@ -16,19 +16,49 @@ async def get_all_currencies(
         session: AsyncSession = Depends(db_helper.session_dependency)
 ):
     all_currencies_list = await dao_obj_currencies.find_all(session)
-    response = [dao_obj_currencies.get_correct_currency_dict(currency) for currency in all_currencies_list]
-    return response
+    if isinstance(all_currencies_list, list):
+        response = [dao_obj_currencies.get_correct_currency_dict(currency) for currency in all_currencies_list]
+        return response
+    else:
+        response = all_currencies_list
+        raise HTTPException(
+            status_code=response.code,
+            detail={"message": response.message}
+        )
 
 
-# @router.post("/currencies")
-# async def currencies(
-#     name: Annotated[str, Form(..., min_length=3, max_length=30)],
-#     code: Annotated[str, Form(..., min_length=3, max_length=3)],
-#     sign: Annotated[str, Form(..., min_length=1, max_length=5)],
-# ):
-#     return {"name": name, "code": code, "sign": sign}
-#
-#
-# @router.get("/currency/{code}", response_model=Currencies)
-# async def currency(code: Annotated[str, Path(min_length=3, max_length=3)]):
-#     return {"currency": code}
+@router.get("/currency")
+async def get_currency_by_empty_code(
+        session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    response = await dao_obj_currencies.find_by_code(session=session, code="")
+
+    raise CurrencyException(
+        message=response.message,
+        status_code=response.code
+    )
+
+
+@router.get("/currency/{code}")
+async def get_currency_by_code(
+        code: Annotated[str, Path(max_length=3)],
+        session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    response = await dao_obj_currencies.find_by_code(session=session, code=code)
+    if isinstance(response, Currencies):
+        currency = dao_obj_currencies.get_correct_currency_dict(response)
+        return currency
+    else:
+        raise CurrencyException(
+            message=response.message,
+            status_code=response.code
+        )
+
+
+@router.post("/currencies")
+async def currencies(
+    name: Annotated[str, Form(..., min_length=3, max_length=30)],
+    code: Annotated[str, Form(..., min_length=3, max_length=3)],
+    sign: Annotated[str, Form(..., min_length=1, max_length=5)],
+):
+    return {"name": name, "code": code, "sign": sign}
