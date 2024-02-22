@@ -1,4 +1,4 @@
-from sqlalchemy import select, Result
+from sqlalchemy import select, Result, insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.dto_response import ErrorResponse
@@ -85,3 +85,6 @@ class DaoCurrencyRepository:
         }
 
         return currency_dict
+
+    async def create_currency(self, session: AsyncSession, currency_code, currency_name, currency_sign):
+        pass
