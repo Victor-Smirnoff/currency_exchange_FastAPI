@@ -3,11 +3,9 @@ from fastapi import APIRouter, Form, Path, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoCurrencyRepository
-from src.dto import CurrencyDTO
 from src.exception import CurrencyException
 from src.model import db_helper
 from src.model import Currency
-from src.schema import CurrencyCreate
 
 router = APIRouter(tags=["currencies"])
 dao_obj_currencies = DaoCurrencyRepository()
