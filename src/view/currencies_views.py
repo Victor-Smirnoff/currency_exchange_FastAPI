@@ -3,10 +3,11 @@ from fastapi import APIRouter, Form, Path, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoCurrencyRepository
+from src.dto import CurrencyDTO
 from src.exception import CurrencyException
 from src.model import db_helper
 from src.model import Currency
-
+from src.schema import CurrencyCreate
 
 router = APIRouter(tags=["currencies"])
 dao_obj_currencies = DaoCurrencyRepository()
@@ -18,7 +19,7 @@ async def get_all_currencies(
 ):
     all_currencies_list = await dao_obj_currencies.find_all(session)
     if isinstance(all_currencies_list, list):
-        response = [dao_obj_currencies.get_correct_currency_dict(currency) for currency in all_currencies_list]
+        response = [dao_obj_currencies.get_currency_dto(currency) for currency in all_currencies_list]
         return response
     else:
         response = all_currencies_list
@@ -47,7 +48,7 @@ async def get_currency_by_code(
 ):
     response = await dao_obj_currencies.find_by_code(session=session, code=code)
     if isinstance(response, Currency):
-        currency = dao_obj_currencies.get_correct_currency_dict(response)
+        currency = dao_obj_currencies.get_currency_dto(response)
         return currency
     else:
         raise CurrencyException(
@@ -61,5 +62,7 @@ async def currencies(
     name: Annotated[str, Form(..., min_length=3, max_length=30)],
     code: Annotated[str, Form(..., min_length=3, max_length=3)],
     sign: Annotated[str, Form(..., min_length=1, max_length=5)],
+    session: AsyncSession = Depends(db_helper.session_dependency),
 ):
-    return {"name": name, "code": code, "sign": sign}
+    new_currency = CurrencyCreate(full_name=name, code=code, sign=sign)
+    return await dao_obj_currencies.create_currency(session=session, new_currency=new_currency)

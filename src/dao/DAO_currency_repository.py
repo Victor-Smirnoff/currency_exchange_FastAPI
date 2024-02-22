@@ -1,7 +1,7 @@
 from sqlalchemy import select, Result
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.dto_response import ErrorResponse
+from src.dto import ErrorResponse, CurrencyDTO
 from src.model import Currency
 from src.schema import CurrencyCreate
 
@@ -72,24 +72,30 @@ class DaoCurrencyRepository:
             return response
 
     @staticmethod
-    def get_correct_currency_dict(currency: Currency) -> dict:
+    def get_currency_dto(currency: Currency) -> CurrencyDTO:
         """
-        Метод делает правильный словарь для отправки в REST API
+        Метод создает DTO объект на основе объекта модели класса Currency
         :param currency: объект класса Currency
-        :return: dict формата {"id": id, "name": name, "code": code, "sign": sign}
+        :return: CurrencyDTO
         """
-        currency_dict = {
-            "id": currency.id,
-            "name": currency.full_name,
-            "code": currency.code,
-            "sign": currency.sign,
-        }
+        currency_dto_obj = CurrencyDTO(
+            id=currency.id,
+            name=currency.full_name,
+            code=currency.code,
+            sign=currency.sign,
 
-        return currency_dict
+        )
+        return currency_dto_obj
 
     @staticmethod
     async def create_currency(session: AsyncSession, new_currency: CurrencyCreate) -> Currency:
-        currency = Currency(**new_currency.model_dump())
+        currency_dict = {
+            "name": new_currency.name,
+            "code": new_currency.code,
+            "sign": new_currency.sign,
+        }
+
+        currency = Currency(**currency_dict)
         session.add(currency)
         await session.commit()
         await session.refresh(currency)
