@@ -1,11 +1,11 @@
 import decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CurrencyBase(BaseModel):
     code: str
-    name: str
+    name: str = Field(..., alias="full_name")
     sign: str
 
 

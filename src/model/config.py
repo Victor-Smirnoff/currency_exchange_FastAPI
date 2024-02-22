@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DB_NAME: str = getenv('DB_NAME')
 
     @property
-    def data_base_url(self):
+    def data_base_url(self) -> str:
         # "postgresql+asyncpg://currency_user:0000@localhost:5432/currency_exchange"
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 

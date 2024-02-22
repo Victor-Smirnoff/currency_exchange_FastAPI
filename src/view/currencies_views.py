@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoCurrencyRepository
 from src.exception import CurrencyException
-from src.model import Currency, db_helper
+from src.model import db_helper
+from src.model import Currency
 
 
 router = APIRouter(tags=["currencies"])
