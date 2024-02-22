@@ -1,11 +1,13 @@
 __all__ = (
-    "CurrencyBase",
     "Currency",
     "CurrencyCreate",
+    "ExchangeRate",
+    "ExchangeRateCreate",
 
 )
 
 
-from src.schema.schemas import CurrencyBase
 from src.schema.schemas import Currency
 from src.schema.schemas import CurrencyCreate
+from src.schema.schemas import ExchangeRate
+from src.schema.schemas import ExchangeRateCreate
