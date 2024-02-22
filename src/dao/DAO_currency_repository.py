@@ -120,3 +120,27 @@ class DaoCurrencyRepository:
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
+
+    async def delete_currency(self, session: AsyncSession, code: str) -> Currency | ErrorResponse:
+        """
+        Метод для удаления валюты из таблицы
+        :param session: объект асинхронной сессии AsyncSession
+        :param code: код валюты
+        :return: объект класса Currency | ErrorResponse
+        """
+        if code == "":
+            response = ErrorResponse(code=400, message="Код валюты отсутствует в адресе")
+            return response
+
+        currency = await self.find_by_code(session=session, code=code)
+        if isinstance(currency, Currency):
+            try:
+                await session.delete(currency)
+                await session.commit()
+                return currency
+
+            except SQLAlchemyError:
+                response = ErrorResponse(code=500, message=f"База данных недоступна")
+                return response
+        else:
+            return currency

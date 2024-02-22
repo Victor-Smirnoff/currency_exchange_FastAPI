@@ -56,7 +56,7 @@ async def get_currency_by_code(
 
 
 @router.post("/currencies", status_code=201)
-async def currencies(
+async def create_currency(
     name: Annotated[Optional[str], Form(max_length=30)] = "",
     code: Annotated[Optional[str], Form(max_length=3)] = "",
     sign: Annotated[Optional[str], Form(max_length=5)] = "",
@@ -68,6 +68,22 @@ async def currencies(
         currency_code=code,
         currency_sign=sign,
     )
+    if isinstance(response, Currency):
+        currency = dao_obj_currencies.get_currency_dto(response)
+        return currency
+    else:
+        raise CurrencyException(
+            message=response.message,
+            status_code=response.code
+        )
+
+
+@router.delete("/currencies", status_code=200)
+async def delete_currency(
+    code: Annotated[Optional[str], Form(max_length=3)] = "",
+    session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    response = await dao_obj_currencies.delete_currency(session=session, code=code)
     if isinstance(response, Currency):
         currency = dao_obj_currencies.get_currency_dto(response)
         return currency
