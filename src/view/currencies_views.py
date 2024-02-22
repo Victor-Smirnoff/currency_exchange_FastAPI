@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import APIRouter, Form, Path, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -57,12 +57,24 @@ async def get_currency_by_code(
         )
 
 
-@router.post("/currencies")
+@router.post("/currencies", status_code=201)
 async def currencies(
-    name: Annotated[str, Form(..., min_length=3, max_length=30)],
-    code: Annotated[str, Form(..., min_length=3, max_length=3)],
-    sign: Annotated[str, Form(..., min_length=1, max_length=5)],
+    name: Annotated[Optional[str], Form(max_length=30)] = "",
+    code: Annotated[Optional[str], Form(max_length=3)] = "",
+    sign: Annotated[Optional[str], Form(max_length=5)] = "",
     session: AsyncSession = Depends(db_helper.session_dependency),
 ):
-    new_currency = CurrencyCreate(full_name=name, code=code, sign=sign)
-    return await dao_obj_currencies.create_currency(session=session, new_currency=new_currency)
+    response = await dao_obj_currencies.create_currency(
+        session=session,
+        currency_name=name,
+        currency_code=code,
+        currency_sign=sign,
+    )
+    if isinstance(response, Currency):
+        currency = dao_obj_currencies.get_currency_dto(response)
+        return currency
+    else:
+        raise CurrencyException(
+            message=response.message,
+            status_code=response.code
+        )

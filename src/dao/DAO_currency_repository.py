@@ -1,9 +1,8 @@
 from sqlalchemy import select, Result
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.dto import ErrorResponse, CurrencyDTO
 from src.model import Currency
-from src.schema import CurrencyCreate
 
 
 class DaoCurrencyRepository:
@@ -23,8 +22,8 @@ class DaoCurrencyRepository:
             result: Result = await session.execute(stmt)
             list_all_currencies = result.scalars().all()
             return list(list_all_currencies)
-        except SQLAlchemyError as e:
-            response = ErrorResponse(code=500, message=f"База данных недоступна: {e}")
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
 
     @staticmethod
@@ -42,8 +41,8 @@ class DaoCurrencyRepository:
             else:
                 response = ErrorResponse(code=404, message=f"Валюта с id {currency_id} не найдена")
                 return response
-        except SQLAlchemyError as e:
-            response = ErrorResponse(code=500, message=f"База данных недоступна: {e}")
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
 
     @staticmethod
@@ -67,8 +66,8 @@ class DaoCurrencyRepository:
                     else:
                         response = ErrorResponse(code=404, message=f"Валюта “{code}” не найдена")
                     return response
-        except SQLAlchemyError as e:
-            response = ErrorResponse(code=500, message=f"База данных недоступна: {e}")
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
 
     @staticmethod
@@ -88,15 +87,36 @@ class DaoCurrencyRepository:
         return currency_dto_obj
 
     @staticmethod
-    async def create_currency(session: AsyncSession, new_currency: CurrencyCreate) -> Currency:
-        currency_dict = {
-            "name": new_currency.name,
-            "code": new_currency.code,
-            "sign": new_currency.sign,
-        }
+    async def create_currency(
+        session: AsyncSession,
+        currency_name: str,
+        currency_code: str,
+        currency_sign: str,
+    ) -> Currency | ErrorResponse:
+        """
+        Метод записывает новую валюту в БД
+        :param session: объект асинхронной сессии AsyncSession
+        :param currency_name: имя валюты
+        :param currency_code: код валюты
+        :param currency_sign: символ валюты
+        :return: объект класса Currency | ErrorResponse
+        """
 
-        currency = Currency(**currency_dict)
-        session.add(currency)
-        await session.commit()
-        await session.refresh(currency)
-        return currency
+        if not all((currency_name, currency_code, currency_sign)):
+            response = ErrorResponse(code=400, message="Отсутствует нужное поле формы")
+            return response
+
+        try:
+            new_currency = Currency(code=currency_code, full_name=currency_name, sign=currency_sign)
+            session.add(new_currency)
+            try:
+                await session.commit()
+                await session.refresh(new_currency)
+                return new_currency
+            except IntegrityError:
+                response = ErrorResponse(code=409, message=f"Валюта с таким кодом “{currency_code}” уже существует")
+                return response
+
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
+            return response
