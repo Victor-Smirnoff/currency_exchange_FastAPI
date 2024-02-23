@@ -1,6 +1,7 @@
-from typing import Annotated
+import decimal
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoExchangeRepository
@@ -54,6 +55,29 @@ async def get_exchange_rates_by_currency_codes(
             session=session,
             exchange_rate=response,
         )
+        return exchange_rate
+    else:
+        raise ExchangerateException(
+            message=response.message,
+            status_code=response.code
+        )
+
+
+@router.post("/exchangeRates", status_code=201)
+async def create_exchange_rate(
+    baseCurrencyCode: Annotated[Optional[str], Form(max_length=3)] = "",
+    targetCurrencyCode: Annotated[Optional[str], Form(max_length=3)] = "",
+    rate: Annotated[Optional[decimal.Decimal], Form()] = "",
+    session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    response = await dao_obj.create_exchange_rate(
+        session=session,
+        base_currency_code=baseCurrencyCode,
+        target_currency_code=targetCurrencyCode,
+        rate=rate,
+    )
+    if isinstance(response, ExchangeRate):
+        exchange_rate = await dao_obj.get_exchange_rate_dto(session=session, exchange_rate=response)
         return exchange_rate
     else:
         raise ExchangerateException(
