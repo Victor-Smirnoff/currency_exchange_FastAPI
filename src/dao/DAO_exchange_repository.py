@@ -1,3 +1,5 @@
+import decimal
+
 from sqlalchemy import select, Result, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -123,3 +125,19 @@ class DaoExchangeRepository:
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
+
+    @staticmethod
+    async def create_exchange_rate(
+            session: AsyncSession,
+            base_currency_code: str,
+            target_currency_code: str,
+            rate: decimal.Decimal,
+    ) -> ExchangeRate | ErrorResponse:
+        """
+        Метод для добавления нового обменного курса
+        :param session: объект асинхронной сессии AsyncSession
+        :param base_currency_code: код базовой валюты
+        :param target_currency_code: код целевой валюты
+        :param rate: обменный курс
+        :return: объект класса ExchangeRate | ErrorResponse
+        """
