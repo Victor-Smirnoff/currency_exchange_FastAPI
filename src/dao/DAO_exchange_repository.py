@@ -1,4 +1,4 @@
-from sqlalchemy import select, Result
+from sqlalchemy import select, Result, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -75,6 +75,51 @@ class DaoExchangeRepository:
             else:
                 response = ErrorResponse(code=404, message=f"Обменный курс с id {exchange_rate_id} не найден")
                 return response
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
+            return response
+
+    @staticmethod
+    async def find_by_codes(session: AsyncSession, currency_codes: str) -> ExchangeRate | ErrorResponse:
+        """
+        Метод возвращает найденный объект класса ExchangeRate если он найден в БД, иначе объект ErrorResponse
+        :param session: объект асинхронной сессии AsyncSession
+        :param currency_codes: коды валют в адресе запроса
+        :return: объект класса ExchangeRate или ErrorResponse
+        """
+        if not currency_codes or len(currency_codes) != 6:
+            response = ErrorResponse(
+                code=400,
+                message="Коды валют отсутствуют в адресе или длина двух кодов валют не равна 6"
+            )
+            return response
+
+        base_currency_code = currency_codes[:3]
+        target_currency_code = currency_codes[3:]
+
+        try:
+            stmt = (select(ExchangeRate).where(and_(
+                    ExchangeRate.base_currency_id == select(Currency.id).where(
+                        Currency.code == base_currency_code),
+                    ExchangeRate.target_currency_id == select(Currency.id).where(
+                        Currency.code == target_currency_code))
+            ))
+
+            result: Result = await session.execute(stmt)
+            if isinstance(result, Result):
+                exchange_rate = result.scalar()
+                if isinstance(exchange_rate, ExchangeRate):
+                    return exchange_rate
+                else:
+                    if currency_codes == "":
+                        response = ErrorResponse(code=400, message="Коды валют пары отсутствуют в адресе")
+                    else:
+                        response = ErrorResponse(
+                            code=404,
+                            message=f"Обменный курс для пары “{currency_codes}” не найден"
+                        )
+                    return response
+
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
