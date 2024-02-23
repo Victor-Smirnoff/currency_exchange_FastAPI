@@ -1,8 +1,8 @@
 """tables creation
 
-Revision ID: d5ce1cd33541
+Revision ID: 371d1d72a3ba
 Revises: 
-Create Date: 2024-02-17 22:34:15.643181
+Create Date: 2024-02-23 15:47:38.682029
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "d5ce1cd33541"
+revision: str = "371d1d72a3ba"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,6 +28,7 @@ def upgrade() -> None:
         sa.Column("sign", sa.String(length=3), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("code"),
     )
     op.create_table(
         "exchangerates",
@@ -35,14 +36,8 @@ def upgrade() -> None:
         sa.Column("target_currency_id", sa.Integer(), nullable=False),
         sa.Column("rate", sa.Numeric(precision=12, scale=4), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["base_currency_id"],
-            ["currencies.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["target_currency_id"],
-            ["currencies.id"],
-        ),
+        sa.ForeignKeyConstraint(["base_currency_id"], ["currencies.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["target_currency_id"], ["currencies.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###
