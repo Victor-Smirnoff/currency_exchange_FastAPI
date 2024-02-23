@@ -1,7 +1,7 @@
 import decimal
 
 from sqlalchemy import select, Result, and_
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dto import ErrorResponse, ExchangeRateDTO
@@ -141,3 +141,52 @@ class DaoExchangeRepository:
         :param rate: обменный курс
         :return: объект класса ExchangeRate | ErrorResponse
         """
+
+        if not all((base_currency_code, target_currency_code, rate)):
+            response = ErrorResponse(code=400, message="Отсутствует нужное поле формы")
+            return response
+
+        dao_currency_obj = DaoCurrencyRepository()
+
+        try:
+            base_currency = await dao_currency_obj.find_by_code(
+                session=session,
+                code=base_currency_code
+            )
+            target_currency = await dao_currency_obj.find_by_code(
+                session=session,
+                code=target_currency_code
+            )
+
+            if isinstance(base_currency, Currency) and isinstance(target_currency, Currency):
+                base_currency_id = base_currency.id
+                target_currency_id = target_currency.id
+
+                new_exchange_rate = ExchangeRate(
+                    base_currency_id=base_currency_id,
+                    target_currency_id=target_currency_id,
+                    rate=rate
+                    )
+                session.add(new_exchange_rate)
+                try:
+                    await session.commit()
+                    await session.refresh(new_exchange_rate)
+                    return new_exchange_rate
+                except IntegrityError:
+                    response = ErrorResponse(
+                        code=409,
+                        message=f"Валютная пара с таким кодом "
+                                f"“{base_currency_code}{target_currency_code}” уже существует"
+                    )
+                    return response
+            else:
+                response = ErrorResponse(
+                    code=404,
+                    message=f"Одна (или обе) валюта из валютной пары “{base_currency_code}{target_currency_code}” "
+                            f"не существует в БД"
+                )
+                return response
+
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
+            return response
