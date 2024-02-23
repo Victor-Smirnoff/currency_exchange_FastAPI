@@ -59,3 +59,22 @@ class DaoExchangeRepository:
             )
 
             return exchange_rate_obj
+
+    @staticmethod
+    async def find_by_id(session: AsyncSession, exchange_rate_id: int) -> ExchangeRate | ErrorResponse:
+        """
+        Метод возвращает найденный объект класса ExchangeRate если он найден в БД, иначе объект ErrorResponse
+        :param session: объект асинхронной сессии AsyncSession
+        :param exchange_rate_id: айди обменного курса
+        :return: объект класса ExchangeRate или ErrorResponse
+        """
+        try:
+            exchange_rate = await session.get(ExchangeRate, exchange_rate_id)
+            if isinstance(exchange_rate, ExchangeRate):
+                return exchange_rate
+            else:
+                response = ErrorResponse(code=404, message=f"Обменный курс с id {exchange_rate_id} не найден")
+                return response
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
+            return response
