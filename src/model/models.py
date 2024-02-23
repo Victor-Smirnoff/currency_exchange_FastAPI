@@ -1,6 +1,6 @@
 import decimal
 
-from sqlalchemy import String, ForeignKey, Numeric
+from sqlalchemy import String, ForeignKey, Numeric, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.model.database import Base
@@ -46,3 +46,5 @@ class ExchangeRate(Base):
         foreign_keys=[target_currency_id],
         back_populates='target_exchange_rates'
     )
+
+    __table_args__ = (UniqueConstraint('base_currency_id', 'target_currency_id'),)
