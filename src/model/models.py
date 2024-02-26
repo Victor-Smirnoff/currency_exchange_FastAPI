@@ -47,4 +47,4 @@ class ExchangeRate(Base):
         back_populates='target_exchange_rates'
     )
 
-    __table_args__ = (UniqueConstraint('base_currency_id', 'target_currency_id'),)
+    __table_args__ = (UniqueConstraint('base_currency_id', 'target_currency_id', name='unique_id'),)
