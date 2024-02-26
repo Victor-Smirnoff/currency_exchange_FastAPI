@@ -5,10 +5,13 @@ from fastapi.responses import JSONResponse
 from src.exception import CurrencyException, ExchangerateException
 from src.view import currencies_router
 from src.view import exchange_rates_router
+from src.view import exchange_router
+
 
 app = FastAPI()
 app.include_router(currencies_router)
 app.include_router(exchange_rates_router)
+app.include_router(exchange_router)
 
 
 @app.exception_handler(CurrencyException)
