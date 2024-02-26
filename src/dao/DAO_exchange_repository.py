@@ -190,3 +190,38 @@ class DaoExchangeRepository:
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
+
+    async def update_exchange_rate(
+            self,
+            session: AsyncSession,
+            base_currency_code: str,
+            target_currency_code: str,
+            rate: decimal.Decimal,
+    ) -> ExchangeRate | ErrorResponse:
+        """
+        Метод для изменения существующего обменного курса
+        :param session: объект асинхронной сессии AsyncSession
+        :param base_currency_code: код базовой валюты
+        :param target_currency_code: код целевой валюты
+        :param rate: обменный курс
+        :return: объект класса ExchangeRate | ErrorResponse
+        """
+        if isinstance(rate, str) and rate == "":
+            response = ErrorResponse(code=400, message="Отсутствует нужное поле формы")
+            return response
+
+        try:
+            exchange_rate = await self.find_by_codes(
+                session=session,
+                currency_codes=str(base_currency_code + target_currency_code),
+            )
+            if isinstance(exchange_rate, ExchangeRate):
+                exchange_rate.rate = rate
+                session.add(exchange_rate)
+                await session.commit()
+                return exchange_rate
+            else:
+                return exchange_rate
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
+            return response

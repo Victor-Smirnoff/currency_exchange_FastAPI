@@ -84,3 +84,32 @@ async def create_exchange_rate(
             message=response.message,
             status_code=response.code
         )
+
+
+@router.patch("/exchangeRate/{currency_codes}")
+async def get_exchange_rates_by_currency_codes(
+        currency_codes: Annotated[str, Path(max_length=6)],
+        session: AsyncSession = Depends(db_helper.session_dependency),
+        rate: Annotated[Optional[decimal.Decimal], Form()] = "",
+):
+    base_currency_code = currency_codes[:3]
+    target_currency_code = currency_codes[3:]
+
+    response = await dao_obj.update_exchange_rate(
+        session=session,
+        base_currency_code=base_currency_code,
+        target_currency_code=target_currency_code,
+        rate=rate,
+    )
+
+    if isinstance(response, ExchangeRate):
+        exchange_rate = await dao_obj.get_exchange_rate_dto(
+            session=session,
+            exchange_rate=response,
+        )
+        return exchange_rate
+    else:
+        raise ExchangerateException(
+            message=response.message,
+            status_code=response.code
+        )
