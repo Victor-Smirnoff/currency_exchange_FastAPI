@@ -113,3 +113,30 @@ async def get_exchange_rates_by_currency_codes(
             message=response.message,
             status_code=response.code
         )
+
+
+@router.delete("/exchangeRate/{currency_codes}")
+async def get_exchange_rates_by_currency_codes(
+        currency_codes: Annotated[str, Path(max_length=6)],
+        session: AsyncSession = Depends(db_helper.session_dependency),
+):
+    base_currency_code = currency_codes[:3]
+    target_currency_code = currency_codes[3:]
+
+    response = await dao_obj.delete_exchange_rate(
+        session=session,
+        base_currency_code=base_currency_code,
+        target_currency_code=target_currency_code,
+    )
+
+    if isinstance(response, ExchangeRate):
+        exchange_rate = await dao_obj.get_exchange_rate_dto(
+            session=session,
+            exchange_rate=response,
+        )
+        return exchange_rate
+    else:
+        raise ExchangerateException(
+            message=response.message,
+            status_code=response.code
+        )

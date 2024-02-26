@@ -225,3 +225,32 @@ class DaoExchangeRepository:
         except SQLAlchemyError:
             response = ErrorResponse(code=500, message=f"База данных недоступна")
             return response
+
+    async def delete_exchange_rate(
+            self,
+            session: AsyncSession,
+            base_currency_code: str,
+            target_currency_code: str,
+    ) -> ExchangeRate | ErrorResponse:
+        """
+        Метод для удаления существующего обменного курса
+        :param session: объект асинхронной сессии AsyncSession
+        :param base_currency_code: код базовой валюты
+        :param target_currency_code: код целевой валюты
+        :return: объект класса ExchangeRate | ErrorResponse
+        """
+
+        try:
+            exchange_rate = await self.find_by_codes(
+                session=session,
+                currency_codes=str(base_currency_code + target_currency_code),
+            )
+            if isinstance(exchange_rate, ExchangeRate):
+                await session.delete(exchange_rate)
+                await session.commit()
+                return exchange_rate
+            else:
+                return exchange_rate
+        except SQLAlchemyError:
+            response = ErrorResponse(code=500, message=f"База данных недоступна")
+            return response
