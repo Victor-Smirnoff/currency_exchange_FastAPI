@@ -21,7 +21,7 @@ class ExchangeService(DaoExchangeRepository):
         :return: объект класса ExchangeResponse или объект класса ErrorResponse
         """
         # пробуем получить прямой курс и конвертировать
-        response = self.get_direct_course(
+        response = await self.get_direct_course(
             session=session,
             currency_from=currency_from,
             currency_to=currency_to,
@@ -31,7 +31,7 @@ class ExchangeService(DaoExchangeRepository):
             return response
 
         # пробуем получить обратный курс и конвертировать
-        response = self.get_reverse_course(
+        response = await self.get_reverse_course(
             session=session,
             currency_from=currency_from,
             currency_to=currency_to,
@@ -41,7 +41,7 @@ class ExchangeService(DaoExchangeRepository):
             return response
 
         # пробуем получить кросс-курс и конвертировать
-        response = self.get_cross_course(
+        response = await self.get_cross_course(
             session=session,
             currency_from=currency_from,
             currency_to=currency_to,
@@ -68,7 +68,7 @@ class ExchangeService(DaoExchangeRepository):
         # складываем коды валют в единую строку для запроса прямого курса
         currency_codes = currency_from + currency_to
         # пробуем получить данные по этому курсу валют
-        response = self.find_by_codes(
+        response = await self.find_by_codes(
             session=session,
             currency_codes=currency_codes,
         )
@@ -79,11 +79,11 @@ class ExchangeService(DaoExchangeRepository):
             rate = response.rate
             converted_amount = Decimal(rate) * amount
             converted_amount = str(converted_amount.quantize(Decimal('1.00')))  # округление до 2 цифр в дробной части
-            base_currency = dao_currency_obj.find_by_id(
+            base_currency = await dao_currency_obj.find_by_id(
                 session=session,
                 currency_id=base_currency_id,
             )
-            target_currency = dao_currency_obj.find_by_id(
+            target_currency = await dao_currency_obj.find_by_id(
                 session=session,
                 currency_id=target_currency_id,
             )
@@ -108,7 +108,7 @@ class ExchangeService(DaoExchangeRepository):
         # складываем коды валют в единую строку для запроса прямого курса
         reversed_currency_codes = currency_to + currency_from
         # пробуем получить данные по этому курсу валют
-        response = self.find_by_codes(
+        response = await self.find_by_codes(
             session=session,
             currency_codes=reversed_currency_codes,
         )
@@ -120,11 +120,11 @@ class ExchangeService(DaoExchangeRepository):
             rate = str(rate.quantize(Decimal('1.000000')))
             converted_amount = (Decimal(rate)) * amount
             converted_amount = str(converted_amount.quantize(Decimal('1.00')))  # округление до 2 цифр в дробной части
-            base_currency = dao_currency_obj.find_by_id(
+            base_currency = await dao_currency_obj.find_by_id(
                 session=session,
                 currency_id=base_currency_id,
             )
-            target_currency = dao_currency_obj.find_by_id(
+            target_currency = await dao_currency_obj.find_by_id(
                 session=session,
                 currency_id=target_currency_id,
             )
@@ -146,11 +146,11 @@ class ExchangeService(DaoExchangeRepository):
         """
         getcontext().prec = 7  # устанавливаем точность числа в 7 знаков
         amount = Decimal(amount)
-        response_base_currency = self.find_by_codes(
+        response_base_currency = await self.find_by_codes(
             session=session,
             currency_codes=str("USD" + currency_from),
         )
-        response_target_currency = self.find_by_codes(
+        response_target_currency = await self.find_by_codes(
             session=session,
             currency_codes=str("USD" + currency_to),
         )
@@ -162,11 +162,11 @@ class ExchangeService(DaoExchangeRepository):
             converted_amount = rate * amount
             converted_amount = str(converted_amount.quantize(Decimal('1.00')))  # округление до 2 цифр в дробной части
             rate = str(rate.quantize(Decimal('1.000000')))
-            base_currency = dao_currency_obj.find_by_id(
+            base_currency = await dao_currency_obj.find_by_id(
                 session=session,
                 currency_id=base_currency_id,
             )
-            target_currency = dao_currency_obj.find_by_id(
+            target_currency = await dao_currency_obj.find_by_id(
                 session=session,
                 currency_id=target_currency_id,
             )
