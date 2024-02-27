@@ -78,7 +78,7 @@ class DaoCurrencyRepository:
         :return: CurrencyDTO
         """
         currency_dto_obj = CurrencyDTO(
-            id=currency.id,
+            currency_id=currency.id,
             name=currency.full_name,
             code=currency.code,
             sign=currency.sign,

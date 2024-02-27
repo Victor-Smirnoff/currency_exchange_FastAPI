@@ -7,6 +7,7 @@ from src.exception import CurrencyException
 from src.model import db_helper
 from src.model import Currency
 
+
 router = APIRouter(tags=["currencies"])
 dao_obj = DaoCurrencyRepository()
 

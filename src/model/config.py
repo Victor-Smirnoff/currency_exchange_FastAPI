@@ -18,7 +18,7 @@ class Settings(BaseSettings):
         # "postgresql+asyncpg://currency_user:0000@localhost:5432/currency_exchange"
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    db_echo: bool = True
+    db_echo: bool = False
 
 
 settings = Settings()

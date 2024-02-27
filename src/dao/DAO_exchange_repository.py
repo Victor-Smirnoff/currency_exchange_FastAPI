@@ -54,9 +54,9 @@ class DaoExchangeRepository:
             target_currency_dto = dao_currency_obj.get_currency_dto(target_currency)
 
             exchange_rate_obj = ExchangeRateDTO(
-                id=exchange_rate.id,
-                baseCurrency=base_currency_dto,
-                targetCurrency=target_currency_dto,
+                exchange_rate_id=exchange_rate.id,
+                base_currency=base_currency_dto,
+                target_currency=target_currency_dto,
                 rate=exchange_rate.rate,
             )
 

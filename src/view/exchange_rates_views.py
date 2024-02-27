@@ -8,6 +8,7 @@ from src.dao import DaoExchangeRepository
 from src.exception import ExchangerateException
 from src.model import db_helper, ExchangeRate
 
+
 router = APIRouter(tags=["exchange_rates"])
 dao_obj = DaoExchangeRepository()
 
