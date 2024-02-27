@@ -10,9 +10,11 @@ REST API для описания валют и обменных курсов. П
 ![Python](https://img.shields.io/badge/Python-333?style=for-the-badge&logo=python&logoColor=yellow)
 ![FastAPI](https://img.shields.io/badge/FastAPI-333?style=for-the-badge&logo=FastAPI&logoColor=#009688)
 ![Asyncio](https://img.shields.io/badge/Asyncio-333?style=for-the-badge&logo=Asyncio)
+
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-333?style=for-the-badge&logo=SQLAlchemy)
 ![Alembic](https://img.shields.io/badge/Alembic-333?style=for-the-badge&logo=Alembic)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-333?style=for-the-badge&logo=PostgreSQL)
+
 ![Uvicorn](https://img.shields.io/badge/Uvicorn-333?style=for-the-badge&logo=Uvicorn)
 ![Poetry](https://img.shields.io/badge/Poetry-333?style=for-the-badge&logo=Poetry)
 
