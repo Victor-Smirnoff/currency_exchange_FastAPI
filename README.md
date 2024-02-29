@@ -45,8 +45,12 @@ poetry install<br>
 или с использованием pip командой<br>
 pip install -r pyproject.toml
 
+Удалить все файлы и директории alembic<br>
+
 Инициировать новый проект для миграций alembic командой<br>
 alembic init -t async alembic
+
+Скопировать содержимое файлов настроек конфигурации alembic.ini и env.py из данного репозитория во вновь созданные файлы<br>
 
 Выполнить начальную миграцию через alembic командой<br>
 alembic revision --autogenerate -m "tables creation"
