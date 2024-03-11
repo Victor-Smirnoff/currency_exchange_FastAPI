@@ -1,30 +1,35 @@
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoCurrencyRepository
 from src.dto import ExchangeRateDTO
-from src.model import ExchangeRate, Currency
-from src.service import CurrencyService
+from src.model import ExchangeRate, Currency, db_helper
+from src.service import CurrencyService, currency_service
 
 
 class ExchangeRateService:
+    def __init__(self, session: AsyncSession = Depends(db_helper.session_dependency)):
+        self.session = session
 
-    @staticmethod
-    async def get_exchange_rate_dto(session: AsyncSession, exchange_rate: ExchangeRate) -> ExchangeRateDTO:
+    async def get_exchange_rate_dto(
+        self,
+        exchange_rate: ExchangeRate,
+        currency_service_obj: CurrencyService = Depends(currency_service),
+    ) -> ExchangeRateDTO:
         """
         Метод создает DTO объект на основе объекта модели класса ExchangeRate
-        :param session: объект асинхронной сессии AsyncSession
         :param exchange_rate: объект класса ExchangeRate
+        :param currency_service_obj: здесь передается зависимость на объект класса CurrencyService
         :return: объект класса ExchangeRateDTO
         """
         dao_currency_obj = DaoCurrencyRepository()
-        currency_service_obj = CurrencyService()
 
         base_currency = await dao_currency_obj.find_by_id(
-            session=session,
+            session=self.session,
             currency_id=exchange_rate.base_currency_id
         )
         target_currency = await dao_currency_obj.find_by_id(
-            session=session,
+            session=self.session,
             currency_id=exchange_rate.target_currency_id
         )
 

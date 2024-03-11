@@ -2,7 +2,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Form, Path, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.dao import DaoCurrencyRepository
+from src.dao import DaoCurrencyRepository, dao_currency_repository
 from src.exception import CurrencyException
 from src.model import db_helper
 from src.model import Currency
@@ -10,15 +10,15 @@ from src.service import CurrencyService, currency_service
 
 
 router = APIRouter(tags=["currencies"])
-dao_currency_obj = DaoCurrencyRepository()
 
 
 @router.get("/currencies")
 async def get_all_currencies(
     session: AsyncSession = Depends(db_helper.session_dependency),
+    dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
-    all_currencies_list = await dao_currency_obj.find_all(session)
+    all_currencies_list = await dao_currency_obj.find_all()
     if isinstance(all_currencies_list, list):
         response = [currency_service_obj.get_currency_dto(currency) for currency in all_currencies_list]
         return response
@@ -33,8 +33,9 @@ async def get_all_currencies(
 @router.get("/currency")
 async def get_currency_by_empty_code(
     session: AsyncSession = Depends(db_helper.session_dependency),
+    dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
 ):
-    response = await dao_currency_obj.find_by_code(session=session, code="")
+    response = await dao_currency_obj.find_by_code(code="")
 
     raise CurrencyException(
         message=response.message,
@@ -46,9 +47,10 @@ async def get_currency_by_empty_code(
 async def get_currency_by_code(
     code: Annotated[str, Path(max_length=3)],
     session: AsyncSession = Depends(db_helper.session_dependency),
+    dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
-    response = await dao_currency_obj.find_by_code(session=session, code=code)
+    response = await dao_currency_obj.find_by_code(code=code)
     if isinstance(response, Currency):
         currency = currency_service_obj.get_currency_dto(response)
         return currency
@@ -65,10 +67,10 @@ async def create_currency(
     code: Annotated[Optional[str], Form(max_length=3)] = "",
     sign: Annotated[Optional[str], Form(max_length=5)] = "",
     session: AsyncSession = Depends(db_helper.session_dependency),
+    dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
     response = await dao_currency_obj.create_currency(
-        session=session,
         currency_name=name,
         currency_code=code,
         currency_sign=sign,
@@ -87,9 +89,10 @@ async def create_currency(
 async def delete_currency(
     code: Annotated[Optional[str], Form(max_length=3)] = "",
     session: AsyncSession = Depends(db_helper.session_dependency),
+    dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
-    response = await dao_currency_obj.delete_currency(session=session, code=code)
+    response = await dao_currency_obj.delete_currency(code=code)
     if isinstance(response, Currency):
         currency = currency_service_obj.get_currency_dto(response)
         return currency
