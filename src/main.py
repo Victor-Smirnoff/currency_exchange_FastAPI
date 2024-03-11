@@ -3,9 +3,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from src.exception import CurrencyException, ExchangerateException
-from src.view import currencies_router
-from src.view import exchange_rates_router
-from src.view import exchange_router
+from src.controller import currencies_router
+from src.controller import exchange_rates_router
+from src.controller import exchange_router
 
 
 app = FastAPI()
