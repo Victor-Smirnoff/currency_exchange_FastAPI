@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.dao import DaoExchangeRepository, DaoCurrencyRepository
 from src.dto import ExchangeResponse, ErrorResponse, ExchangeDTO
 from src.model import ExchangeRate
+from src.service.currency_service import CurrencyService
 
 
 class ExchangeService(DaoExchangeRepository):
@@ -215,10 +216,10 @@ class ExchangeService(DaoExchangeRepository):
         :return: объект класса ExchangeDTO
         """
 
-        dao_currency_obj = DaoCurrencyRepository()
+        currency_service_obj = CurrencyService()
 
-        base_currency_dto = dao_currency_obj.get_currency_dto(exchange_obj.base_currency)
-        target_currency_dto = dao_currency_obj.get_currency_dto(exchange_obj.target_currency)
+        base_currency_dto = currency_service_obj.get_currency_dto(exchange_obj.base_currency)
+        target_currency_dto = currency_service_obj.get_currency_dto(exchange_obj.target_currency)
 
         exchange_dto_obj = ExchangeDTO(
             baseCurrency=base_currency_dto,
