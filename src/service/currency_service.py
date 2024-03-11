@@ -19,3 +19,7 @@ class CurrencyService:
 
         )
         return currency_dto_obj
+
+
+async def currency_service():
+    return CurrencyService()

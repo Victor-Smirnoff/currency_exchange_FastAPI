@@ -6,17 +6,17 @@ from src.dao import DaoCurrencyRepository
 from src.exception import CurrencyException
 from src.model import db_helper
 from src.model import Currency
-from src.service import CurrencyService
+from src.service import CurrencyService, currency_service
 
 
 router = APIRouter(tags=["currencies"])
 dao_currency_obj = DaoCurrencyRepository()
-currency_service_obj = CurrencyService()
 
 
 @router.get("/currencies")
 async def get_all_currencies(
-        session: AsyncSession = Depends(db_helper.session_dependency)
+    session: AsyncSession = Depends(db_helper.session_dependency),
+    currency_service_obj: CurrencyService = Depends(currency_service),
 ):
     all_currencies_list = await dao_currency_obj.find_all(session)
     if isinstance(all_currencies_list, list):
@@ -32,7 +32,7 @@ async def get_all_currencies(
 
 @router.get("/currency")
 async def get_currency_by_empty_code(
-        session: AsyncSession = Depends(db_helper.session_dependency),
+    session: AsyncSession = Depends(db_helper.session_dependency),
 ):
     response = await dao_currency_obj.find_by_code(session=session, code="")
 
@@ -44,8 +44,9 @@ async def get_currency_by_empty_code(
 
 @router.get("/currency/{code}")
 async def get_currency_by_code(
-        code: Annotated[str, Path(max_length=3)],
-        session: AsyncSession = Depends(db_helper.session_dependency),
+    code: Annotated[str, Path(max_length=3)],
+    session: AsyncSession = Depends(db_helper.session_dependency),
+    currency_service_obj: CurrencyService = Depends(currency_service),
 ):
     response = await dao_currency_obj.find_by_code(session=session, code=code)
     if isinstance(response, Currency):
@@ -64,6 +65,7 @@ async def create_currency(
     code: Annotated[Optional[str], Form(max_length=3)] = "",
     sign: Annotated[Optional[str], Form(max_length=5)] = "",
     session: AsyncSession = Depends(db_helper.session_dependency),
+    currency_service_obj: CurrencyService = Depends(currency_service),
 ):
     response = await dao_currency_obj.create_currency(
         session=session,
@@ -85,6 +87,7 @@ async def create_currency(
 async def delete_currency(
     code: Annotated[Optional[str], Form(max_length=3)] = "",
     session: AsyncSession = Depends(db_helper.session_dependency),
+    currency_service_obj: CurrencyService = Depends(currency_service),
 ):
     response = await dao_currency_obj.delete_currency(session=session, code=code)
     if isinstance(response, Currency):
