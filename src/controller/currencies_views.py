@@ -1,10 +1,8 @@
 from typing import Annotated, Optional
 from fastapi import APIRouter, Form, Path, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dao import DaoCurrencyRepository, dao_currency_repository
 from src.exception import CurrencyException
-from src.model import db_helper
 from src.model import Currency
 from src.service import CurrencyService, currency_service
 
@@ -14,7 +12,6 @@ router = APIRouter(tags=["currencies"])
 
 @router.get("/currencies")
 async def get_all_currencies(
-    session: AsyncSession = Depends(db_helper.session_dependency),
     dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
@@ -32,7 +29,6 @@ async def get_all_currencies(
 
 @router.get("/currency")
 async def get_currency_by_empty_code(
-    session: AsyncSession = Depends(db_helper.session_dependency),
     dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
 ):
     response = await dao_currency_obj.find_by_code(code="")
@@ -46,7 +42,6 @@ async def get_currency_by_empty_code(
 @router.get("/currency/{code}")
 async def get_currency_by_code(
     code: Annotated[str, Path(max_length=3)],
-    session: AsyncSession = Depends(db_helper.session_dependency),
     dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
@@ -66,7 +61,6 @@ async def create_currency(
     name: Annotated[Optional[str], Form(max_length=30)] = "",
     code: Annotated[Optional[str], Form(max_length=3)] = "",
     sign: Annotated[Optional[str], Form(max_length=5)] = "",
-    session: AsyncSession = Depends(db_helper.session_dependency),
     dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
@@ -88,7 +82,6 @@ async def create_currency(
 @router.delete("/currencies", status_code=200)
 async def delete_currency(
     code: Annotated[Optional[str], Form(max_length=3)] = "",
-    session: AsyncSession = Depends(db_helper.session_dependency),
     dao_currency_obj: DaoCurrencyRepository = Depends(dao_currency_repository),
     currency_service_obj: CurrencyService = Depends(currency_service),
 ):
