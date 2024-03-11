@@ -1,5 +1,7 @@
 from decimal import getcontext, Decimal
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.dao import DaoExchangeRepository, DaoCurrencyRepository
 from src.dto import ExchangeResponse, ErrorResponse, ExchangeDTO
 from src.model import ExchangeRate
@@ -11,7 +13,13 @@ class ExchangeService(DaoExchangeRepository):
     перевода определённого количества средств из одной валюты в другую
     """
 
-    async def convert_currency(self, session, currency_from, currency_to, amount):
+    async def convert_currency(
+        self,
+        session: AsyncSession,
+        currency_from: str,
+        currency_to: str,
+        amount: float
+    ) -> ExchangeResponse | ErrorResponse:
         """
         Метод принимает в обработку запрос на расчёт перевода определённого количества средств из одной валюты в другую
         :param session: объект асинхронной сессии AsyncSession
@@ -53,7 +61,13 @@ class ExchangeService(DaoExchangeRepository):
         # если пришли сюда и ничего не вернули, то возвращаем message Обменный курс не найден
         return response
 
-    async def get_direct_course(self, session, currency_from, currency_to, amount):
+    async def get_direct_course(
+        self,
+        session: AsyncSession,
+        currency_from: str,
+        currency_to: str,
+        amount: float,
+    ) -> ExchangeResponse | ErrorResponse:
         """
         Метод пытается найти прямой обменный курс, если находит, то возвращает объект класса ExchangeResponse
         или объект класса ErrorResponse - если нет прямого обменного курса
@@ -65,12 +79,12 @@ class ExchangeService(DaoExchangeRepository):
         """
         getcontext().prec = 7  # устанавливаем точность числа в 7 знаков
         amount = Decimal(amount)
-        # складываем коды валют в единую строку для запроса прямого курса
-        currency_codes = currency_from + currency_to
-        # пробуем получить данные по этому курсу валют
+
+        # пробуем получить данные по прямому этому курсу валют
         response = await self.find_by_codes(
             session=session,
-            currency_codes=currency_codes,
+            base_currency_code=currency_from,
+            target_currency_code=currency_to,
         )
         if isinstance(response, ExchangeRate):
             dao_currency_obj = DaoCurrencyRepository()
@@ -93,7 +107,13 @@ class ExchangeService(DaoExchangeRepository):
         else:
             return response
 
-    async def get_reverse_course(self, session, currency_from, currency_to, amount):
+    async def get_reverse_course(
+        self,
+        session: AsyncSession,
+        currency_from: str,
+        currency_to: str,
+        amount: float,
+    ) -> ExchangeResponse | ErrorResponse:
         """
         Метод пытается найти обратный обменный курс, если находит, то возвращает объект класса ExchangeResponse
         или объект класса ErrorResponse - если нет обратного обменного курса
@@ -105,12 +125,12 @@ class ExchangeService(DaoExchangeRepository):
         """
         getcontext().prec = 7  # устанавливаем точность числа в 7 знаков
         amount = Decimal(amount)
-        # складываем коды валют в единую строку для запроса прямого курса
-        reversed_currency_codes = currency_to + currency_from
-        # пробуем получить данные по этому курсу валют
+
+        # пробуем получить данные по обратному курсу валют
         response = await self.find_by_codes(
             session=session,
-            currency_codes=reversed_currency_codes,
+            base_currency_code=currency_to,
+            target_currency_code=currency_from,
         )
         if isinstance(response, ExchangeRate):
             dao_currency_obj = DaoCurrencyRepository()
@@ -134,7 +154,13 @@ class ExchangeService(DaoExchangeRepository):
         else:
             return response
 
-    async def get_cross_course(self, session, currency_from, currency_to, amount):
+    async def get_cross_course(
+        self,
+        session: AsyncSession,
+        currency_from: str,
+        currency_to: str,
+        amount: float,
+    ) -> ExchangeResponse | ErrorResponse:
         """
         Метод пытается найти кросс-курс через USD-валюту, если находит, то возвращает объект класса ExchangeResponse
         или объект класса ErrorResponse - если нет обратного обменного курса
@@ -148,11 +174,13 @@ class ExchangeService(DaoExchangeRepository):
         amount = Decimal(amount)
         response_base_currency = await self.find_by_codes(
             session=session,
-            currency_codes=str("USD" + currency_from),
+            base_currency_code="USD",
+            target_currency_code=currency_from,
         )
         response_target_currency = await self.find_by_codes(
             session=session,
-            currency_codes=str("USD" + currency_to),
+            base_currency_code="USD",
+            target_currency_code=currency_to,
         )
         if isinstance(response_base_currency, ExchangeRate) and isinstance(response_target_currency, ExchangeRate):
             dao_currency_obj = DaoCurrencyRepository()

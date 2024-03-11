@@ -82,22 +82,26 @@ class DaoExchangeRepository:
             return response
 
     @staticmethod
-    async def find_by_codes(session: AsyncSession, currency_codes: str) -> ExchangeRate | ErrorResponse:
+    async def find_by_codes(
+        session: AsyncSession,
+        base_currency_code: str,
+        target_currency_code: str,
+    ) -> ExchangeRate | ErrorResponse:
         """
         Метод возвращает найденный объект класса ExchangeRate если он найден в БД, иначе объект ErrorResponse
         :param session: объект асинхронной сессии AsyncSession
-        :param currency_codes: коды валют в адресе запроса
+        :param base_currency_code: код базовой валюты в адресе запроса
+        :param target_currency_code: код целевой валюты в адресе запроса
         :return: объект класса ExchangeRate или ErrorResponse
         """
-        if not currency_codes or len(currency_codes) != 6:
+
+        if (not base_currency_code or not target_currency_code
+                or len(base_currency_code) + len(target_currency_code) != 6):
             response = ErrorResponse(
                 code=400,
                 message="Коды валют отсутствуют в адресе или длина двух кодов валют не равна 6"
             )
             return response
-
-        base_currency_code = currency_codes[:3]
-        target_currency_code = currency_codes[3:]
 
         try:
             stmt = (select(ExchangeRate).where(and_(
@@ -113,12 +117,12 @@ class DaoExchangeRepository:
                 if isinstance(exchange_rate, ExchangeRate):
                     return exchange_rate
                 else:
-                    if currency_codes == "":
+                    if base_currency_code == "" or target_currency_code == "":
                         response = ErrorResponse(code=400, message="Коды валют пары отсутствуют в адресе")
                     else:
                         response = ErrorResponse(
                             code=404,
-                            message=f"Обменный курс для пары “{currency_codes}” не найден"
+                            message=f"Обменный курс для пары “{base_currency_code}{target_currency_code}” не найден"
                         )
                     return response
 
@@ -128,10 +132,10 @@ class DaoExchangeRepository:
 
     @staticmethod
     async def create_exchange_rate(
-            session: AsyncSession,
-            base_currency_code: str,
-            target_currency_code: str,
-            rate: decimal.Decimal,
+        session: AsyncSession,
+        base_currency_code: str,
+        target_currency_code: str,
+        rate: decimal.Decimal,
     ) -> ExchangeRate | ErrorResponse:
         """
         Метод для добавления нового обменного курса
@@ -192,11 +196,11 @@ class DaoExchangeRepository:
             return response
 
     async def update_exchange_rate(
-            self,
-            session: AsyncSession,
-            base_currency_code: str,
-            target_currency_code: str,
-            rate: decimal.Decimal,
+        self,
+        session: AsyncSession,
+        base_currency_code: str,
+        target_currency_code: str,
+        rate: decimal.Decimal,
     ) -> ExchangeRate | ErrorResponse:
         """
         Метод для изменения существующего обменного курса
@@ -213,7 +217,8 @@ class DaoExchangeRepository:
         try:
             exchange_rate = await self.find_by_codes(
                 session=session,
-                currency_codes=str(base_currency_code + target_currency_code),
+                base_currency_code=base_currency_code,
+                target_currency_code=target_currency_code,
             )
             if isinstance(exchange_rate, ExchangeRate):
                 exchange_rate.rate = rate
@@ -227,10 +232,10 @@ class DaoExchangeRepository:
             return response
 
     async def delete_exchange_rate(
-            self,
-            session: AsyncSession,
-            base_currency_code: str,
-            target_currency_code: str,
+        self,
+        session: AsyncSession,
+        base_currency_code: str,
+        target_currency_code: str,
     ) -> ExchangeRate | ErrorResponse:
         """
         Метод для удаления существующего обменного курса
@@ -243,7 +248,8 @@ class DaoExchangeRepository:
         try:
             exchange_rate = await self.find_by_codes(
                 session=session,
-                currency_codes=str(base_currency_code + target_currency_code),
+                base_currency_code=base_currency_code,
+                target_currency_code=target_currency_code,
             )
             if isinstance(exchange_rate, ExchangeRate):
                 await session.delete(exchange_rate)
