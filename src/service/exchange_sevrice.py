@@ -30,40 +30,40 @@ class ExchangeService:
         :return: объект класса ExchangeResponse или объект класса ErrorResponse
         """
         # пробуем получить прямой курс и конвертировать
-        response = await self.get_direct_course(
+        exchange_response = await self.get_direct_course(
             currency_from=currency_from,
             currency_to=currency_to,
             amount=amount,
             dao_currency_obj=dao_currency_obj,
             dao_exchange_obj=dao_exchange_obj
         )
-        if isinstance(response, ExchangeResponse):
-            return response
+        if isinstance(exchange_response, ExchangeResponse):
+            return exchange_response
 
         # пробуем получить обратный курс и конвертировать
-        response = await self.get_reverse_course(
+        exchange_response = await self.get_reverse_course(
             currency_from=currency_from,
             currency_to=currency_to,
             amount=amount,
             dao_currency_obj=dao_currency_obj,
             dao_exchange_obj=dao_exchange_obj
         )
-        if isinstance(response, ExchangeResponse):
-            return response
+        if isinstance(exchange_response, ExchangeResponse):
+            return exchange_response
 
         # пробуем получить кросс-курс и конвертировать
-        response = await self.get_cross_course(
+        exchange_response = await self.get_cross_course(
             currency_from=currency_from,
             currency_to=currency_to,
             amount=amount,
             dao_currency_obj=dao_currency_obj,
             dao_exchange_obj=dao_exchange_obj
         )
-        if isinstance(response, ExchangeResponse):
-            return response
+        if isinstance(exchange_response, ExchangeResponse):
+            return exchange_response
 
         # если пришли сюда и ничего не вернули, то возвращаем message Обменный курс не найден
-        return response
+        return exchange_response
 
     @staticmethod
     async def get_direct_course(
@@ -87,14 +87,14 @@ class ExchangeService:
         amount = Decimal(amount)
 
         # пробуем получить данные по прямому этому курсу валют
-        response = await dao_exchange_obj.find_by_codes(
+        exchange_rate = await dao_exchange_obj.find_by_codes(
             base_currency_code=currency_from,
             target_currency_code=currency_to,
         )
-        if isinstance(response, ExchangeRate):
-            base_currency_id = response.base_currency_id
-            target_currency_id = response.target_currency_id
-            rate = response.rate
+        if isinstance(exchange_rate, ExchangeRate):
+            base_currency_id = exchange_rate.base_currency_id
+            target_currency_id = exchange_rate.target_currency_id
+            rate = exchange_rate.rate
             converted_amount = Decimal(rate) * amount
             converted_amount = str(converted_amount.quantize(Decimal('1.00')))  # округление до 2 цифр в дробной части
             base_currency = await dao_currency_obj.find_by_id(
@@ -104,10 +104,10 @@ class ExchangeService:
                 currency_id=target_currency_id,
             )
             amount = str(amount)
-            response = ExchangeResponse(base_currency, target_currency, rate, amount, converted_amount)
-            return response
+            exchange_rate = ExchangeResponse(base_currency, target_currency, rate, amount, converted_amount)
+            return exchange_rate
         else:
-            return response
+            return exchange_rate
 
     @staticmethod
     async def get_reverse_course(
@@ -131,14 +131,14 @@ class ExchangeService:
         amount = Decimal(amount)
 
         # пробуем получить данные по обратному курсу валют
-        response = await dao_exchange_obj.find_by_codes(
+        exchange_rate = await dao_exchange_obj.find_by_codes(
             base_currency_code=currency_to,
             target_currency_code=currency_from,
         )
-        if isinstance(response, ExchangeRate):
-            base_currency_id = response.target_currency_id  # base_currency_id в обратном курсе TargetCurrencyId
-            target_currency_id = response.base_currency_id  # target_currency_id в обратном курсе BaseCurrencyId
-            rate = 1 / Decimal(response.rate)
+        if isinstance(exchange_rate, ExchangeRate):
+            base_currency_id = exchange_rate.target_currency_id  # base_currency_id в обратном курсе TargetCurrencyId
+            target_currency_id = exchange_rate.base_currency_id  # target_currency_id в обратном курсе BaseCurrencyId
+            rate = 1 / Decimal(exchange_rate.rate)
             rate = str(rate.quantize(Decimal('1.000000')))
             converted_amount = (Decimal(rate)) * amount
             converted_amount = str(converted_amount.quantize(Decimal('1.00')))  # округление до 2 цифр в дробной части
@@ -149,10 +149,10 @@ class ExchangeService:
                 currency_id=target_currency_id,
             )
             amount = str(amount)
-            response = ExchangeResponse(base_currency, target_currency, rate, amount, converted_amount)
-            return response
+            exchange_rate = ExchangeResponse(base_currency, target_currency, rate, amount, converted_amount)
+            return exchange_rate
         else:
-            return response
+            return exchange_rate
 
     @staticmethod
     async def get_cross_course(
@@ -174,18 +174,19 @@ class ExchangeService:
         """
         getcontext().prec = 7  # устанавливаем точность числа в 7 знаков
         amount = Decimal(amount)
-        response_base_currency = await dao_exchange_obj.find_by_codes(
+        exchange_rate_usd_base_currency = await dao_exchange_obj.find_by_codes(
             base_currency_code="USD",
             target_currency_code=currency_from,
         )
-        response_target_currency = await dao_exchange_obj.find_by_codes(
+        exchange_rate_usd_target_currency = await dao_exchange_obj.find_by_codes(
             base_currency_code="USD",
             target_currency_code=currency_to,
         )
-        if isinstance(response_base_currency, ExchangeRate) and isinstance(response_target_currency, ExchangeRate):
-            base_currency_id = response_base_currency.target_currency_id
-            target_currency_id = response_target_currency.target_currency_id
-            rate = Decimal(response_target_currency.rate) / Decimal(response_base_currency.rate)
+        if (isinstance(exchange_rate_usd_base_currency, ExchangeRate)
+                and isinstance(exchange_rate_usd_target_currency, ExchangeRate)):
+            base_currency_id = exchange_rate_usd_base_currency.target_currency_id
+            target_currency_id = exchange_rate_usd_target_currency.target_currency_id
+            rate = Decimal(exchange_rate_usd_target_currency.rate) / Decimal(exchange_rate_usd_base_currency.rate)
             converted_amount = rate * amount
             converted_amount = str(converted_amount.quantize(Decimal('1.00')))  # округление до 2 цифр в дробной части
             rate = str(rate.quantize(Decimal('1.000000')))
@@ -196,13 +197,13 @@ class ExchangeService:
                 currency_id=target_currency_id,
             )
             amount = str(amount)
-            response = ExchangeResponse(base_currency, target_currency, rate, amount, converted_amount)
-            return response
+            exchange_response = ExchangeResponse(base_currency, target_currency, rate, amount, converted_amount)
+            return exchange_response
         else:
             response_code = 404
             message = f"Ошибка {response_code} - Обменный курс {currency_from}-{currency_to} не найден"
-            response = ErrorResponse(response_code, message)
-            return response
+            exchange_response = ErrorResponse(response_code, message)
+            return exchange_response
 
     @staticmethod
     async def get_exchange_dto(
