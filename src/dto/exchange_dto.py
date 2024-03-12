@@ -1,22 +1,16 @@
-import decimal
-
+from pydantic import BaseModel, Field
 from src.dto import CurrencyDTO
 
 
-class ExchangeDTO:
+class ExchangeDTO(BaseModel):
     """
     Класс для передачи данных об обмене валюты
     """
-    def __init__(
-            self,
-            baseCurrency: CurrencyDTO,
-            targetCurrency: CurrencyDTO,
-            rate: decimal.Decimal,
-            amount: float,
-            convertedAmount: float,
-            ):
-        self.baseCurrency = baseCurrency
-        self.targetCurrency = targetCurrency
-        self.rate = rate
-        self.amount = amount
-        self.convertedAmount = convertedAmount
+    base_currency: CurrencyDTO = Field(..., serialization_alias="baseCurrency")
+    target_currency: CurrencyDTO = Field(..., serialization_alias="targetCurrency")
+    rate: float = Field(..., serialization_alias="rate")
+    amount: int | float = Field(..., serialization_alias="amount")
+    converted_amount: float = Field(..., serialization_alias="convertedAmount")
+
+    class Config:
+        arbitrary_types_allowed = True

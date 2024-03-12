@@ -221,11 +221,11 @@ class ExchangeService:
         target_currency_dto = currency_service_obj.get_currency_dto(exchange_obj.target_currency)
 
         exchange_dto_obj = ExchangeDTO(
-            baseCurrency=base_currency_dto,
-            targetCurrency=target_currency_dto,
+            base_currency=base_currency_dto,
+            target_currency=target_currency_dto,
             rate=exchange_obj.rate,
             amount=exchange_obj.amount,
-            convertedAmount=exchange_obj.converted_amount,
+            converted_amount=exchange_obj.converted_amount,
         )
 
         return exchange_dto_obj
